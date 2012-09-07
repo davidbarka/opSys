@@ -30,6 +30,7 @@ import nachos.machine.TCB;
  * </pre></blockquote>
  */
 public class KThread {
+	// David was here
     /**
      * Get the current thread.
      *
