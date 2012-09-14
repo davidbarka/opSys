@@ -28,6 +28,8 @@ public class Alarm {
      */
     public void timerInterrupt() {
 	KThread.currentThread().yield();
+//	System.out.println("timerinterupt on " + Machine.timer().getTime() + " ticks");
+//	System.out.println(System.currentTimeMillis());
     }
 
     /**
@@ -50,4 +52,18 @@ public class Alarm {
 	while (wakeTime > Machine.timer().getTime())
 	    KThread.yield();
     }
+    
+    
+    private class WaitingThread{
+    	
+    	
+    	
+    	
+    	
+    }
+    
+    
+    
+    
+    
 }
