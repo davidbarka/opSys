@@ -426,7 +426,7 @@ public class KThread {
 		for(int i=0;i<tab.length;i++){
 			tab[i] = new KThread(new PingTest(i));
 			tab[i].setName("forked thread" + i).fork();
-
+			ThreadedKernel.alarm.waitUntil(10000000);
 		}
 		for(int i=0;i<tab.length;i++){
 			tab[i].join();
@@ -458,6 +458,10 @@ public class KThread {
 	private String name = "(unnamed thread)";
 	private Runnable target;
 	private TCB tcb;
+
+	public boolean checkIfStatusIsReady(){
+		return status==statusReady;
+	}
 
 	//This is null if join() has not been called on this thread.
 	private KThread hasCalledJoin=null;
