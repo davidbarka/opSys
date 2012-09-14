@@ -1,6 +1,5 @@
 package nachos.threads;
 
-import java.util.LinkedList;
 import nachos.machine.*;
 
 /**
@@ -24,8 +23,7 @@ public class Condition2 {
 	public Condition2(Lock conditionLock) {
 		this.conditionLock = conditionLock;
 		
-		// initializers
-		awaitingThreads = new LinkedList<KThread>();
+		awaitingThreads = ThreadedKernel.scheduler.newThreadQueue(true);
 		interruptState = false; 
 	}
 
@@ -33,18 +31,17 @@ public class Condition2 {
 	 * Atomically release the associated lock and go to sleep on this condition
 	 * variable until another thread wakes it using <tt>wake()</tt>. The
 	 * current thread must hold the associated lock. The thread will
-	 * automatically reacquire the lock before <tt>sleep()</tt> returns.
+	 * automatically re-acquire the lock before <tt>sleep()</tt> returns.
 	 */
 	public void sleep() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
-
-		KThread current = KThread.currentThread();
-		awaitingThreads.add(current); // add the current thread to a list of waiters
 
 		conditionLock.release();
 		
 		interruptState = Machine.interrupt().disable();
 		
+		// add the current thread to a list of waiters
+		awaitingThreads.waitForAccess(KThread.currentThread());
 		KThread.sleep();
 		
 		Machine.interrupt().restore(interruptState);
@@ -59,15 +56,15 @@ public class Condition2 {
 	 */
 	public void wake() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
-		if(!awaitingThreads.isEmpty()) {
-			interruptState = Machine.interrupt().disable();
-			
-			// remove the first thread from the waiter queue and set it to ready
-			awaitingThreads.removeFirst().ready(); 
-			
-			Machine.interrupt().restore(interruptState);
+		interruptState = Machine.interrupt().disable();
+
+		KThread nextThread = awaitingThreads.nextThread();
+		
+		if(nextThread != null) {
+			nextThread.ready();
 		}
 		
+		Machine.interrupt().restore(interruptState);
 	}
 
 	/**
@@ -77,20 +74,18 @@ public class Condition2 {
 	public void wakeAll() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 
-		if(!awaitingThreads.isEmpty()) {
-			interruptState = Machine.interrupt().disable();
-			
-			// remove all threads from the waiter queue and set them to ready
-			for(int i=0;i<awaitingThreads.size();i++) {
-				awaitingThreads.remove(i).ready();
-			}
-			
-			Machine.interrupt().restore(interruptState);
-		}
+		interruptState = Machine.interrupt().disable();
 
+		KThread nextThread;
+		do {
+			nextThread = awaitingThreads.nextThread();
+			nextThread.ready();
+		} while (nextThread != null);
+		
+		Machine.interrupt().restore(interruptState);
 	}
 
 	private Lock conditionLock;
 	private boolean interruptState;
-	private LinkedList<KThread> awaitingThreads;
+	private ThreadQueue awaitingThreads;
 }
