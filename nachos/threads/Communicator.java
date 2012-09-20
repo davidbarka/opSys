@@ -10,10 +10,23 @@ import nachos.machine.*;
  * threads can be paired off at this point.
  */
 public class Communicator {
+	
+	private Condition canSpeak, canListen, canLeave;
+	private Lock lock;
+	private int buffer;
+	private boolean full;
+	
     /**
      * Allocate a new communicator.
      */
     public Communicator() {
+    	lock = new Lock();
+    	
+    	canSpeak = new Condition(lock);
+    	canListen = new Condition(lock);
+    	canLeave = new Condition(lock);
+    	
+    	full = false;
     }
 
     /**
@@ -27,6 +40,27 @@ public class Communicator {
      * @param	word	the integer to transfer.
      */
     public void speak(int word) {
+		// wait until the lock is free and then acquire it
+    	lock.acquire();
+    	
+    	// if a thread has already spoken, no thread may speak again until 
+    	// some other thread listens for the spoken word
+    	while(full) {
+    		canSpeak.sleep();
+    	}
+    	
+    	buffer = word;
+    	full = true;
+    	
+    	System.out.println(KThread.currentThread().getName() + " speaks word " + word);
+    	
+    	// the buffer now contains a spoken word
+    	// it's time to wake up listener threads
+    	canListen.wake();
+    	canLeave.sleep();
+    	
+    	// set the lock to free
+    	lock.release();
     }
 
     /**
@@ -36,6 +70,31 @@ public class Communicator {
      * @return	the integer transferred.
      */    
     public int listen() {
-	return 0;
+		int result;
+
+		// wait until the lock is free and then acquire it
+		lock.acquire();
+    	
+		// if no thread have spoken, ergo no word in the buffer
+		// the listener threads will have to wait until a speaker thread has spoken
+		while(!full) {
+			canSpeak.wake();
+			canListen.sleep();
+		}
+		
+		result = buffer;
+		full = false;
+		
+		System.out.println(KThread.currentThread().getName() + " listens to word " + result);
+		
+		// the result now contains the spoken word from the buffer
+		// speaker threads may now speak again
+		canLeave.wake();
+		canSpeak.wake();
+		
+		// set the lock to free
+		lock.release();
+		
+		return result;
     }
 }

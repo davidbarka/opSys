@@ -422,16 +422,57 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-		KThread[] tab = new KThread[10];
-		for(int i=0;i<tab.length;i++){
-			tab[i] = new KThread(new PingTest(i));
-			tab[i].setName("forked thread" + i).fork();
-			ThreadedKernel.alarm.waitUntil(10000000);
+//		KThread[] tab = new KThread[50];
+//		for(int i=0;i<tab.length;i++){
+//			tab[i] = new KThread(new PingTest(i));
+//			tab[i].setName("forked thread" + i).fork();
+////			ThreadedKernel.alarm.waitUntil(10);
+//		}
+//		for(int i=0;i<tab.length;i++){
+//			tab[i].join();
+//		}
+//		new PingTest(0).run();
+		
+		final Communicator communicator = new Communicator();
+		
+		KThread[] speakers = new KThread[120];
+		KThread[] listeners = new KThread[120];
+		
+		for(int i=0;i<speakers.length;i++) {
+			speakers[i] = new KThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					communicator.speak(1);
+					
+				}
+			});
+			speakers[i].setName("Speaker thread #" + i);
+			speakers[i].fork();
 		}
-		for(int i=0;i<tab.length;i++){
-			tab[i].join();
+		
+		for(int i=0;i<listeners.length;i++) {
+			listeners[i] = new KThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					communicator.listen();
+					
+				}
+			});
+			
+			listeners[i].setName("Listener thread #" + i);
+			listeners[i].fork();
 		}
-		new PingTest(0).run();
+		
+		for(int i=0;i<speakers.length;i++) {
+			speakers[i].join();
+		}
+		
+		for(int i=0;i<listeners.length;i++) {
+			listeners[i].join();
+		}
+		
 	}
 
 	private static final char dbgThread = 't';
