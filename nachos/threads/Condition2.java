@@ -23,7 +23,7 @@ public class Condition2 {
 	public Condition2(Lock conditionLock) {
 		this.conditionLock = conditionLock;
 		
-		awaitingThreads = ThreadedKernel.scheduler.newThreadQueue(true);
+		awaitingThreads = ThreadedKernel.scheduler.newThreadQueue(false);
 		interruptState = false; 
 	}
 
@@ -77,10 +77,14 @@ public class Condition2 {
 		interruptState = Machine.interrupt().disable();
 
 		KThread nextThread;
-		do {
+		while(true) {
 			nextThread = awaitingThreads.nextThread();
-			nextThread.ready();
-		} while (nextThread != null);
+			if(nextThread != null) {
+				nextThread.ready();
+			} else {
+				break;
+			}
+		}
 		
 		Machine.interrupt().restore(interruptState);
 	}

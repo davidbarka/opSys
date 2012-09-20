@@ -11,7 +11,7 @@ import nachos.machine.*;
  */
 public class Communicator {
 	
-	private Condition canSpeak, canListen, canLeave;
+	private Condition2 canSpeak, canListen, canLeave;
 	private Lock lock;
 	private int buffer;
 	private boolean full;
@@ -22,9 +22,9 @@ public class Communicator {
     public Communicator() {
     	lock = new Lock();
     	
-    	canSpeak = new Condition(lock);
-    	canListen = new Condition(lock);
-    	canLeave = new Condition(lock);
+    	canSpeak = new Condition2(lock);
+    	canListen = new Condition2(lock);
+    	canLeave = new Condition2(lock);
     	
     	full = false;
     }
@@ -56,7 +56,7 @@ public class Communicator {
     	
     	// the buffer now contains a spoken word
     	// it's time to wake up listener threads
-    	canListen.wake();
+    	canListen.wakeAll();
     	canLeave.sleep();
     	
     	// set the lock to free
@@ -78,7 +78,7 @@ public class Communicator {
 		// if no thread have spoken, ergo no word in the buffer
 		// the listener threads will have to wait until a speaker thread has spoken
 		while(!full) {
-			canSpeak.wake();
+			canSpeak.wakeAll();
 			canListen.sleep();
 		}
 		
@@ -89,8 +89,8 @@ public class Communicator {
 		
 		// the result now contains the spoken word from the buffer
 		// speaker threads may now speak again
-		canLeave.wake();
-		canSpeak.wake();
+		canLeave.wakeAll();
+		canSpeak.wakeAll();
 		
 		// set the lock to free
 		lock.release();

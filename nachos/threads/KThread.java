@@ -443,8 +443,7 @@ public class KThread {
 				
 				@Override
 				public void run() {
-					communicator.speak(1);
-					
+					communicator.speak(1);			
 				}
 			});
 			speakers[i].setName("Speaker thread #" + i);
@@ -457,7 +456,6 @@ public class KThread {
 				@Override
 				public void run() {
 					communicator.listen();
-					
 				}
 			});
 			
@@ -471,8 +469,7 @@ public class KThread {
 		
 		for(int i=0;i<listeners.length;i++) {
 			listeners[i].join();
-		}
-		
+		}	
 	}
 
 	private static final char dbgThread = 't';
@@ -503,7 +500,7 @@ public class KThread {
 	public boolean checkIfStatusIsReady(){
 		return status==statusReady;
 	}
-
+	
 	//This is null if join() has not been called on this thread.
 	private KThread hasCalledJoin=null;
 
