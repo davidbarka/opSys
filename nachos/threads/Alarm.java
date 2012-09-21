@@ -34,8 +34,9 @@ public class Alarm {
 	 * that should be run.
 	 */
 	public void timerInterrupt() {
-		KThread.yield();
+		
 		waitingThread.wakeUpNextThread();
+		KThread.yield();
 		//	System.out.println("timerinterupt on " + Machine.timer().getTime() + " ticks");
 		//	System.out.println(System.currentTimeMillis());
 	}
@@ -56,11 +57,12 @@ public class Alarm {
 	 */
 	public void waitUntil(long x) {
 		// for now, cheat just to get something working (busy waiting is bad)
-		long wakeTime = Machine.timer().getTime() + x;
+		
 		//	while (wakeTime > Machine.timer().getTime())
 		//	    KThread.yield();
 
 		Machine.interrupt().disable();
+		long wakeTime = Machine.timer().getTime() + x;
 		waitingThread.addWaitingThread(KThread.currentThread(), wakeTime);
 		KThread.sleep();
 
@@ -68,30 +70,42 @@ public class Alarm {
 
 
 	private class WaitingThread{
+		
+		private class Node{
+			long wakeUpTime;
+			KThread queuedThread;
+			
+			public Node(KThread queuedThread, long wakeUpTime){
+				this.queuedThread = queuedThread;
+				this.wakeUpTime = wakeUpTime;
+			}
+		}
 
-		List<WaitingThread> waitingThreads;
+		List<Node> waitingThreads;
 
-		long wakeUpTime;
-		KThread queuedThread;
+//		long wakeUpTime;
+//		KThread queuedThread;
 
 		public WaitingThread(){
-			waitingThreads = new ArrayList<WaitingThread>();
+			waitingThreads = new ArrayList<Node>();
 		}
 
 		public void addWaitingThread(KThread queuedThread, long wakeUpTime){
-			this.queuedThread = queuedThread;
-			this.wakeUpTime = wakeUpTime;
-			sortAndInsert(this);
+//			this.queuedThread = queuedThread;
+//			this.wakeUpTime = wakeUpTime;
+			Node node = new Node(queuedThread, wakeUpTime);
+			sortAndInsert(node);
 		}
 
-		private void sortAndInsert(WaitingThread toInsert){
+		private void sortAndInsert(Node toInsert){
+//			waitingThreads.add(toInsert);
 			if(waitingThreads.size()<1){
 				waitingThreads.add(toInsert);
 			}else{
 				int i=0;
 				while (toInsert.wakeUpTime>=waitingThreads.get(i).wakeUpTime) {
 					i++;
-					if(waitingThreads.size()>=i)return;
+					if(waitingThreads.size()>=i)break;
 				}
 				waitingThreads.add(i, toInsert);
 			}
@@ -107,6 +121,15 @@ public class Alarm {
 				index++;
 				if(waitingThreads.size()>=index || waitingThreads.isEmpty())return;
 			}
+//			for(int i=0;i<waitingThreads.size();i++){
+//				if(waitingThreads.get(i).wakeUpTime<=Machine.timer().getTime()){
+//					KThread tmp = waitingThreads.remove(i).queuedThread;
+//					if(!tmp.checkIfStatusIsReady()){
+//						tmp.ready();
+//					}
+//					i--;
+//				}
+//			}
 		}
 
 	}
