@@ -34,11 +34,12 @@ public class Alarm {
 	 * that should be run.
 	 */
 	public void timerInterrupt() {
-		
+		boolean intStatus = Machine.interrupt().disable();
 		waitingThread.wakeUpNextThread();
 		KThread.yield();
 		//	System.out.println("timerinterupt on " + Machine.timer().getTime() + " ticks");
 		//	System.out.println(System.currentTimeMillis());
+		Machine.interrupt().restore(intStatus);
 	}
 
 	/**
@@ -61,11 +62,11 @@ public class Alarm {
 		//	while (wakeTime > Machine.timer().getTime())
 		//	    KThread.yield();
 
-		Machine.interrupt().disable();
+		boolean intStatus = Machine.interrupt().disable();
 		long wakeTime = Machine.timer().getTime() + x;
 		waitingThread.addWaitingThread(KThread.currentThread(), wakeTime);
 		KThread.sleep();
-
+		Machine.interrupt().restore(intStatus);
 	}
 
 
@@ -105,7 +106,7 @@ public class Alarm {
 				int i=0;
 				while (toInsert.wakeUpTime>=waitingThreads.get(i).wakeUpTime) {
 					i++;
-					if(waitingThreads.size()>=i)break;
+					if(waitingThreads.size()<=i)break;
 				}
 				waitingThreads.add(i, toInsert);
 			}

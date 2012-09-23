@@ -433,7 +433,7 @@ public class KThread {
 //		}
 //		new PingTest(0).run();
 		
-		KThread[] tab = new KThread[10];
+		KThread[] tab = new KThread[100];
 		for(int i=0;i<tab.length;i++){
 			tab[i] = new KThread(new Runnable() {
 				
@@ -444,8 +444,10 @@ public class KThread {
 				}
 
 				private void waitLoop() {
-					ThreadedKernel.alarm.waitUntil((long) (Math.random()*100000)+100);
-					System.out.println("hei");
+					Long wakeTime = (long) (Math.random()*10000000+100);
+//					ThreadedKernel.alarm.waitUntil((long) (Math.random()*10000000)+100);
+					ThreadedKernel.alarm.waitUntil(wakeTime);
+					System.out.println("Thread has waited for " + wakeTime);
 				}
 			});
 			tab[i].fork();
